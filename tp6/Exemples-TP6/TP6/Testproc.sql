@@ -1,0 +1,5 @@
+CREATE OR REPLACE PROCEDURE testproc_h2020(numero IN CHAR) IS
+BEGIN
+	DELETE FROM etudes_h2020 WHERE code=numero;
+END;
+/

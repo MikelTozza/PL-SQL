@@ -1,0 +1,126 @@
+pl/sql (procedure language extension to SQL)
+
+Declare
+	<declarations section> (variables)
+BEGIN
+	<executable command> (actual code ex: if's)
+EXCEPTION
+	<exception handling> (what to do when somethign wrong happens)
+END;
+----------------------------------------------------------------------------------------
+ex:
+
+DECLARE
+	i number;
+BEGIN
+	i:=1;  //means i = 1
+	loop
+	dbms_output.put_line(i); // print the data 
+	i:=i+1;
+	exit when i>5;
+	end loop;
+END;
+
+----------------------------------------------------------------------------------------
+
+PROCEDURES ( a named block statement, it may or not return a value)
+
+SYNTAX:
+
+CREATE [or replace] PROCEDURE procdure_name [(parameter_name[IN | OUT | IN OUT] type [,...])]
+{IS | as}
+BEGIN
+	<procedure body>
+END procedure_name;
+
+//no return statement
+-----------------------------------------------------------------------------------------
+ex:
+
+CREATE or REPLACE procedure TopperStudent
+as
+
+topperName student.s_name%type; 	//you want topperName to be same as type of NAME 						//column of student table
+BEGIN
+select name INTO topperName from student when marks=(select max(marks) from student)
+dbms_output.put_line(topperName);
+end topperstudent;
+
+-----------------------------------------------------------------------------------------
+Now to run this procedure:
+
+BEGIN 
+get TopperStudent;
+end;
+
+results : dfisfsf ( whatever you asked to grab )
+------------------------------------------------------------------------------------------
+CURSOR
+
+- A temporary area created in the main memory when a sql statement is executed . A cursor contains information on a select statement and the rows of data accesssed by it
+- This temporary work area is used to store the data retreieved from the database, and manipulate this data
+- A cursor can hold more than one row, bu can process only one row at a time. The set of rows the cursor holds is caled ACTIVE set.
+- There are 2 tye fo cursors
+------------------------------------------------------------------------------------------
+Implicit Cursor
+
+- Implicit cursors get created when you execute DML quesries likes SELECT, INSERT, DELETE, UPDATE
+- Oracle gives some useful attributes on this implicit cursors to help us check the status of MDL operations
+
+%FOUND -> If DML statement affects at least one row returns TRUE else returns FALSE
+%NOTFOUND -> If DML statement affects at least one row returns FALSE else returns TRUE
+%ROWCOUNT -> returns the number of rows affected by the DML operations INSERT, DELETE, UPDATE, SELECT
+------------------------------------------------------------------------------------------
+EX implicit cursor: 
+
+CREATE or REPLACE procesure UpdateFees(newFee int) // parameter newFee for the update
+AS
+var_rows number; 	// variable
+BEGIN
+update student set fees = newFee; 		//set the fee row to new variable newFee
+if SQL%FOUND then
+	var_rows := SQL%ROWCOUNT; 		//how many rows were affaected by this query
+	dbms_output.put_line('THe fees of'||var_rows||'student was updated');
+else
+	dbms_output.put_line('Some issue in updating');
+	end if;
+END;
+-------------------------------------------------------------------------------------------
+
+EXPLICIT CURSOR:
+
+- They must be created when you are executing a SELECT statement that returns more than one row in a PL/SQL procedure or a function
+- Even thoigh the cursor stores multiple records only one record can be processed at a time, which is called as current row. When you fetch a row the current row positions moves to the next row.
+- Both implicit and explicit cursors have the same functionality but they differ in the way they are accessed.
+--------------------------------------------------------------------------------------------
+EXPLICIT CURSOR EX1: Show average feed paid by students of each departement 
+
+DECLARE cursor c1
+IS
+SELECT deptName as Departement, avg(fees) as Average_Fees from student natural join department group by deptName;
+rec1 c1%ROWTYPE; //rec1 is a variable that will store ROW of type c1 which is represented by 		 //the SELECT query on top
+BEGIN
+for rec1 in c1 loop
+dbms_output.put_line(rec1.Departement ||''||rec1.Average_Fees);
+end loop;
+END;
+--------------------------------------------------------------------------------------------
+EXPLICIT CURSOR EX2: Show the department wise student details
+
+DECLARE cursor c1
+IS
+select distict deptName from departement;
+cursor c2(dept varchar)
+IS
+select name, marks from student natural join department where deptName = dept;
+rec1 c1%ROWTYPE;
+rec2 c2%ROWTYPE;
+BEGIN
+for rec1 in c1 loop
+dbms_output.put_line(rec1.deptName);
+for rec2 in c2(rec1.deptname) loop
+dbms_output.put_line(rec2.name||''||rec2.marks);
+end loop;
+dbms_output.put_line('');
+end loop;
+end;
